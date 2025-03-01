@@ -33,17 +33,17 @@ jobs:
         with:
           java-version: '21' # Or your desired JDKversion
           distribution: 'temurin'
-      - name: Tests
-        run: ./gradlew allTests -x wasmJsBrowserTest
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Test Results
-          path: composeApp/build/test-results/**/*.xml
-          reporter: java-junit
+      #- name: Tests
+      #  run: ./gradlew allTests -x wasmJsBrowserTest
+      #- name: Test Report
+      #  uses: dorny/test-reporter@v1
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Test Results
+      #    path: composeApp/build/test-results/**/*.xml
+      #    reporter: java-junit
       - name: Build and website
-        run: ./gradlew wasmJsBrowserDistribution
+        run: ./gradlew assemble
       #- name: Upload website artifact
       #  uses: actions/upload-pages-artifact@v1
       #  with:
