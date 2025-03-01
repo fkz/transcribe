@@ -59,8 +59,8 @@ jobs:
           jarsigner -keystore key.jks -storepass android composeApp/build/outputs/bundle/release/composeApp-release.aab my-alias
         env:
           RELEASE_KEY: ${{ secrets.RELEASE_KEY }}
-      - name: Publish app bundle artefact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bundle
-          path: composeApp/build/outputs/bundle/release/composeApp-release.aab
+      #- name: Publish app bundle artefact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: bundle
+      #    path: composeApp/build/outputs/bundle/release/composeApp-release.aab
