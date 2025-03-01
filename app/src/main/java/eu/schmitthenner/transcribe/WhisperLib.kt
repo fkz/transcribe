@@ -86,6 +86,5 @@ class WhisperLib {
         external fun benchMemcpy(nthread: Int): String
         external fun benchGgmlMulMat(nthread: Int): String
         external fun initLogging()
-        external fun mel(contextPtr: Long, audioData: FloatArray, size: Long, mel: FloatArray): Boolean
     }
 }

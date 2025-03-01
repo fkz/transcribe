@@ -190,24 +190,6 @@ void progress_callback_wrapper(struct whisper_context * ctx, struct whisper_stat
     (*progress_user_data->env)->CallVoidMethod(progress_user_data->env, progress_user_data->object, progress_user_data->invoke, progress);
 }
 
-JNIEXPORT jboolean JNICALL
-Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_mel(
-        JNIEnv *env, jobject thiz, jlong context_ptr, jfloatArray audio_data, jlong audio_size, jfloatArray mel_result
-) {
-    UNUSED(thiz);
-    struct whisper_context *context = (struct whisper_context *) context_ptr;
-    jfloat *audio_data_arr = (*env)->GetFloatArrayElements(env, audio_data, NULL);
-    jfloat *mel_result_arr = (*env)->GetFloatArrayElements(env, mel_result, NULL);
-    const jsize audio_data_length = audio_size;
-    bool result = whisper_pcm_to_mel(context, audio_data_arr, audio_data_length, 4) == 0;
-    if (result) {
-        memcpy(mel_result_arr, mel_state(context), sizeof(float)*3000);
-    }
-    (*env)->ReleaseFloatArrayElements(env, audio_data, audio_data_arr, JNI_ABORT);
-    (*env)->ReleaseFloatArrayElements(env, mel_result, mel_result_arr, JNI_ABORT);
-    return result;
-}
-
 JNIEXPORT void JNICALL
 Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_fullTranscribe(
         JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads, jint offset_ms, jfloatArray audio_data, jint size, jobject progress_callback, jint length) {
