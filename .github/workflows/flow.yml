@@ -55,5 +55,5 @@ jobs:
         with:
           name: bundle
           path: |
-            app/build/outputs/bundle/release/composeApp-release.aab
+            app/build/outputs/bundle/release/app-release.aab
             app/build/outputs/apk/release/app-release.apk
