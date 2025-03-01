@@ -59,13 +59,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bundle
-          path: app/build/outputs/bundle/release/app-release.aab app/build/outputs/apk/release/app-release.apk
-      - name: Upload website artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
           path: |
             app/build/outputs/bundle/release/app-release.aab
             app/build/outputs/apk/release/app-release.apk
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/build/outputs/bundle/release/app-release.aab app/build/outputs/apk/release/app-release.apk
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
