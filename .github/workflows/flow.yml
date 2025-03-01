@@ -48,9 +48,6 @@ jobs:
       #    reporter: java-junit
       - name: Build app
         run: ./gradlew assemble
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v1
       - name: Build Android app bundle
         run: ./gradlew bundle
       - name: Publish app bundle artefact
