@@ -1,7 +1,6 @@
 package eu.schmitthenner.transcribe
 
 import android.content.Context
-import com.google.android.gms.tflite.java.TfLite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -13,12 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
-import org.tensorflow.lite.InterpreterApi
 import java.io.File
-import java.io.InputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.FloatBuffer
 import kotlin.math.min
 
 sealed abstract class TranscribeAction() {
