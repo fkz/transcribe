@@ -44,10 +44,10 @@ jobs:
           reporter: java-junit
       - name: Build and website
         run: ./gradlew wasmJsBrowserDistribution
-      - name: Upload website artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: ./composeApp/build/dist/wasmJs/productionExecutable
+      #- name: Upload website artifact
+      #  uses: actions/upload-pages-artifact@v1
+      #  with:
+      #    path: ./composeApp/build/dist/wasmJs/productionExecutable
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v1
