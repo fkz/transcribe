@@ -23,7 +23,7 @@ jobs:
         working-directory: whisper.cpp
         run: git apply ../whisper.patch
       - name: Add release key
-        run: base64 -d < $MY_RELEASE_KEY > app/my-release-key.jks
+        run: cat $MY_RELEASE_KEY | base64 -d > app/my-release-key.jks
         env:
           MY_RELEASE_KEY: ${{ secrets.MY_RELEASE_KEY }}
 
