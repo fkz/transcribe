@@ -1,0 +1,36 @@
+diff --git a/include/whisper.h b/include/whisper.h
+index 1e13750..a153a9c 100644
+--- a/include/whisper.h
++++ b/include/whisper.h
+@@ -570,6 +570,8 @@ extern "C" {
+         size_t                           n_grammar_rules;
+         size_t                           i_start_rule;
+         float                            grammar_penalty;
++
++        bool stop_after_first_encode;
+     };
+ 
+     // NOTE: this function allocates memory, and it is the responsibility of the caller to free the pointer - see whisper_free_context_params & whisper_free_params()
+diff --git a/src/whisper.cpp b/src/whisper.cpp
+index 069aa6e..26d3575 100644
+--- a/src/whisper.cpp
++++ b/src/whisper.cpp
+@@ -4741,6 +4741,7 @@ struct whisper_full_params whisper_full_default_params(enum whisper_sampling_str
+         /*.n_grammar_rules =*/ 0,
+         /*.i_start_rule    =*/ 0,
+         /*.grammar_penalty =*/ 100.0f,
++        /*.stop_after_first_encode =*/ false
+     };
+ 
+     switch (strategy) {
+@@ -6266,6 +6267,10 @@ int whisper_full_with_state(
+             // update audio window
+             seek += seek_delta;
+ 
++            if (params.stop_after_first_encode) {
++                break;
++            }
++
+             WHISPER_LOG_DEBUG("seek = %d, seek_delta = %d\n", seek, seek_delta);
+         }
+     }
