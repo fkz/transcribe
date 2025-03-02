@@ -44,13 +44,14 @@ class WhisperCpp(val context: Context): Whisper {
     override fun transcribe(floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit) {
         var already = 0
         WhisperLib.fullTranscribe(ptr, 8, floatArray, progress) {
-            for (i in already until it) {
+            val after = already + it
+            for (i in already until after) {
                 val t = WhisperLib.getTextSegment(ptr, i)
                 val t0 = WhisperLib.getTextSegmentT0(ptr, i)
                 val t1 = WhisperLib.getTextSegmentT1(ptr, i)
                 res(TranscribeResult(t0, t1, t))
             }
-            already = it
+            already = after
         }
     }
 
@@ -121,9 +122,9 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                             }
                         }
                         transcribedText.update {
-                            it + "----\n" + whisper.finalTranscription().joinToString("\n") {
+                            whisper.finalTranscription().joinToString("\n") {
                                 "[${it.from/50}-${it.to/50}] ${it.text}"
-                            } + "----\n"
+                            }
                         }
                         progress.update { "Finished transcribing" }
                     }
