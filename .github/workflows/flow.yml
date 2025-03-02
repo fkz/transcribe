@@ -52,9 +52,9 @@ jobs:
       #    path: composeApp/build/test-results/**/*.xml
       #    reporter: java-junit
       - name: Build app
-        run: ./gradlew assemble
+        run: VERSION_CODE=$(git rev-list --count HEAD) VERSION_NAME=$(git rev-parse --short HEAD)  ./gradlew assemble
       - name: Build Android app bundle
-        run: ./gradlew bundle
+        run: VERSION_CODE=$(git rev-list --count HEAD) VERSION_NAME=$(git rev-parse --short HEAD)  ./gradlew bundle
       - name: Publish app bundle artefact
         uses: actions/upload-artifact@v4
         with:

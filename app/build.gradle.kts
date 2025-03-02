@@ -13,10 +13,11 @@ android {
         applicationId = "eu.schmitthenner.transcribe"
         minSdk = 26
         targetSdk = 34
-        versionCode = 25
-        versionName = "1.2.5"
+        val defaultVersionCode = 25
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: defaultVersionCode
+        val defaultVersionName = "1.2.5"
+        versionName = System.getenv("VERSION_NAME") ?: defaultVersionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -33,6 +34,7 @@ android {
         }
 
     }
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     buildTypes {
         release {
