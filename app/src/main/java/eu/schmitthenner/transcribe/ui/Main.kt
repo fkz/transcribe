@@ -244,7 +244,9 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
 
             Text(transcribedTextState.value)
             //Text(transcriptionCount.value.toString())
-            Text(transcribedTextProgress.value)
+            val l = transcribedTextProgress.value
+            val u = if (l == "" && uiState.value.isPlaying) "Converting audio..." else l
+            Text(u)
 
 
             //if (uiState.value.modelState == ModelState.DoesNotExist && selectedModel != null) {
