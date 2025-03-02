@@ -28,6 +28,7 @@ interface Whisper {
     fun transcribe(floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit)
     fun modelChanged(selectedModel: SelectedModel?): Boolean
     fun ready(): Boolean
+    fun finalTranscription(): List<TranscribeResult>
 }
 
 class WhisperCpp(val context: Context): Whisper {
@@ -50,6 +51,16 @@ class WhisperCpp(val context: Context): Whisper {
                 res(TranscribeResult(t0, t1, t))
             }
             already = it
+        }
+    }
+
+    override fun finalTranscription(): List<TranscribeResult> {
+        return (0 until WhisperLib.getTextSegmentCount(ptr)).map {
+            TranscribeResult(
+                WhisperLib.getTextSegmentT0(ptr, it),
+                WhisperLib.getTextSegmentT1(ptr, it),
+                WhisperLib.getTextSegment(ptr, it)
+            )
         }
     }
 
@@ -95,6 +106,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                         val fullSize = action.data.sumOf { it.size }
                         val floatArray = FloatArray(fullSize)
                         var index = 0
+                        progress.update { "Prepare to transcribe" }
                         for (array in action.data) {
                             for (i in 0 until array.size) {
                                 floatArray[index + i] = array[i] / 32768f
@@ -108,6 +120,12 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                             }
                             }
                         }
+                        transcribedText.update {
+                            it + "----\n" + whisper.finalTranscription().joinToString("\n") {
+                                "[${it.from/50}-${it.to/50}] ${it.text}"
+                            } + "----\n"
+                        }
+                        progress.update { "Finished transcribing" }
                     }
                 }
             }

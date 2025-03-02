@@ -14,6 +14,8 @@ set(
         ${CMAKE_SOURCE_DIR}/jni.c
 )
 
+set(GGML_VULKAN ON)
+
 # TODO: this needs to be updated to work with the new ggml CMakeLists
 
 if (NOT GGML_HOME)
@@ -84,7 +86,6 @@ endif ()
 
 build_library("whisper") # Default target
 
-set(GGML_VULKAN ON)
 
 include_directories(${WHISPER_LIB_DIR})
 include_directories(${WHISPER_LIB_DIR}/src)
