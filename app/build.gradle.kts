@@ -18,6 +18,8 @@ android {
         val defaultVersionName = "1.2.5"
         versionName = System.getenv("VERSION_NAME") ?: defaultVersionName
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         vectorDrawables {
             useSupportLibrary = true
         }
