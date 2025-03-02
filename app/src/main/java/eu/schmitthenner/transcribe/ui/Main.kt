@@ -75,8 +75,8 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
 
     val recordFilePicker = context.registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
-            model.setPlayFromFile(true)
             context.lifecycleScope.launch(Dispatchers.IO) {
+                model.setPlayFromFile(true)
                 val data = mutableListOf<ShortArray>()
                 val extractor = MediaExtractor()
                 run {
@@ -168,8 +168,8 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
                     extractor.release()
                 }
                 transcriber.sendData(data, model.uiState.value.prompt)
+                model.setPlayFromFile(false)
             }
-            model.setPlayFromFile(false)
         }
     }
 
