@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
                             .padding(innerPadding)
                     ) {
                         if (selectedItem == "Main") {
-                            Main(uiState, model, recordFilePicker, transcriber, { filePickerLogs.launch("logs.txt")})
+                            Main(uiState, model, recordFilePicker, transcriber, { filePickerLogs.launch("logs.txt")}, this@MainActivity)
                         } else if(selectedItem == "Settings") {
                             Settings(uiState, model, downloader)
                             }

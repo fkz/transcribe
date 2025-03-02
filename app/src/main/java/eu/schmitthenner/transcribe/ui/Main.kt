@@ -193,7 +193,7 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePicker, transcriber: Transcriber, showLogs: () -> Unit) {
+fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePicker, transcriber: Transcriber, showLogs: () -> Unit, context: Context) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(Modifier.verticalScroll(rememberScrollState())) {
             val expanded = remember { mutableStateOf(false)}
@@ -260,14 +260,14 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
                 }) { Text("Upload model manually") } */
             //}
             //val transcriptionValue = transcription.value
-            //Button(onClick = {
-            //    val clipboardManager = getSystemService(ClipboardManager::class.java)
-            //    clipboardManager.setPrimaryClip(
-            //        ClipData.newPlainText("Transcript", transcriptionValue)
-            //    )
-            //}) {
-            //    Text("Copy transcript")
-            //}
+            Button(onClick = {
+                val clipboardManager = context.getSystemService(ClipboardManager::class.java)
+                clipboardManager.setPrimaryClip(
+                    ClipData.newPlainText("Transcript", transcribedTextState.value)
+                )
+            }) {
+                Text("Copy transcript")
+            }
             Button(onClick = {
                 showLogs()
             }) {
