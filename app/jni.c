@@ -179,24 +179,27 @@ struct whisper_context *context = (struct whisper_context *) context_ptr;
 whisper_free(context);
 }
 
-struct progress_user_data {
+struct progress_segment_user_data {
     JNIEnv * env;
     jmethodID invoke;
     jobject object;
 };
 
-void progress_callback_wrapper(struct whisper_context * ctx, struct whisper_state * state, int progress, void *user_data) {
-    struct progress_user_data *progress_user_data = (struct progress_user_data *)user_data;
-    (*progress_user_data->env)->CallVoidMethod(progress_user_data->env, progress_user_data->object, progress_user_data->invoke, progress);
+void callback_wrapper(struct whisper_context * ctx, struct whisper_state * state, int data, void *v_user_data) {
+    struct progress_segment_user_data *user_data = (struct progress_segment_user_data *)v_user_data;
+    (*user_data->env)->CallVoidMethod(user_data->env, user_data->object, user_data->invoke, data);
 }
+
+
 
 JNIEXPORT void JNICALL
 Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_fullTranscribe(
-        JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads, jint offset_ms, jfloatArray audio_data, jint size, jobject progress_callback, jint length) {
+        JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads,
+        jfloatArray audio_data, jobject progress_callback, jobject segment_callback) {
 UNUSED(thiz);
 struct whisper_context *context = (struct whisper_context *) context_ptr;
 jfloat *audio_data_arr = (*env)->GetFloatArrayElements(env, audio_data, NULL);
-const jsize audio_data_length = size;
+const jsize audio_data_length = (*env)->GetArrayLength(env, audio_data);
 
 // The below adapted from the Objective-C iOS sample
 struct whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
@@ -207,19 +210,25 @@ params.print_special = false;
 params.translate = false;
 params.language = "de";
 params.n_threads = num_threads;
-params.offset_ms = offset_ms;
-params.no_context = false;
 params.single_segment = false;
-params.stop_after_first_encode = true;
 
-struct progress_user_data user_data;
-user_data.env = env;
+struct progress_segment_user_data progress_user_data;
+struct progress_segment_user_data segment_user_data;
+progress_user_data.env = env;
+segment_user_data.env = env;
 jclass functionClass = (*env)->GetObjectClass(env, progress_callback);
-user_data.invoke = (*env)->GetMethodID(env, functionClass, "invoke", "(I)V");
-user_data.object = progress_callback;
+progress_user_data.invoke = (*env)->GetMethodID(env, functionClass, "invoke", "(I)V");
+progress_user_data.object = progress_callback;
 
-params.progress_callback = &progress_callback_wrapper;
-params.progress_callback_user_data = &user_data;
+jclass functionClass2 = (*env)->GetObjectClass(env, segment_callback);
+segment_user_data.invoke = (*env)->GetMethodID(env, functionClass2, "invoke", "(I)V");
+segment_user_data.object = segment_callback;
+
+params.progress_callback = &callback_wrapper;
+params.progress_callback_user_data = &progress_user_data;
+
+params.new_segment_callback = &callback_wrapper;
+params.new_segment_callback_user_data = &segment_user_data;
 
 //whisper_reset_timings(context);
 

@@ -62,6 +62,7 @@ import java.io.BufferedReader
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.ui.unit.dp
+import eu.schmitthenner.transcribe.ui.Downloader
 import eu.schmitthenner.transcribe.ui.Main
 import eu.schmitthenner.transcribe.ui.RecordFilePicker
 import eu.schmitthenner.transcribe.ui.Settings
@@ -70,15 +71,12 @@ import java.io.InputStreamReader
 import java.nio.ByteOrder
 
 
-object Downloader {
-    val downloader: MutableStateFlow<Triple<Long, SelectedModel, Model>?> = MutableStateFlow(null)
-}
-
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i("MainActivity", "MainActivity started")
         val model = ViewModelProvider(this).get(Model::class)
+        model.initialize(this)
 
         val transcriber = Transcriber(this, WhisperCpp(this))
         val recorder = Recorder()
@@ -100,32 +98,10 @@ class MainActivity : ComponentActivity() {
                 val writer = contentResolver.openOutputStream(logFile)
                 writer?.write(log.toString().toByteArray())
                 writer?.close()
-                if (writer != null) {
-                    model.downloadFinished()
-                }
             }
         }
 
-        val filePicker2 = registerForActivityResult((ActivityResultContracts.OpenDocument())) { uri: Uri? ->
-            Log.i("DownloadCompleteReceiver", "Picked manually")
-            val uri2 = File(dataDir, model.uiState.value.selectedModel!!.fileName())
-            if (uri != null) {
-                val stream = contentResolver.openInputStream(uri)
-                if (stream != null) {
-                    val stream2 = contentResolver.openOutputStream(uri2.toUri())
-                    if (stream2 != null) {
-                        val buffer = ByteArray(4096)
-                        var bytesRead: Int
-                        while (stream.read(buffer).also { bytesRead = it } != -1) {
-                            stream2.write(buffer, 0, bytesRead)
-                        }
-                        Log.i("DownloadCompleteReceiver", "Successfully copied files")
-                        stream2.close()
-                    }
-                    stream.close()
-                }
-            }
-        }
+        val downloader = Downloader(this, model)
 
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             model.setHasRecordPermission()
@@ -195,16 +171,15 @@ class MainActivity : ComponentActivity() {
                         Text("Transccribe")
                     })
                 }) { innerPadding ->
-
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
                         if (selectedItem == "Main") {
-                            Main(uiState, model, recordFilePicker)
+                            Main(uiState, model, recordFilePicker, transcriber, { filePickerLogs.launch("logs.txt")})
                         } else if(selectedItem == "Settings") {
-                            Settings()
+                            Settings(uiState, model, downloader)
                             }
                         }
                     }

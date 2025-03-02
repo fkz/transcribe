@@ -77,7 +77,7 @@ class WhisperLib {
         external fun initContextFromAsset(assetManager: AssetManager, assetPath: String): Long
         external fun initContext(modelPath: String): Long
         external fun freeContext(contextPtr: Long)
-        external fun fullTranscribe(contextPtr: Long, numThreads: Int, offsetMs: Int, audioData: FloatArray, size: Int, progressCallback: ProgressCallback, durationMs: Int)
+        external fun fullTranscribe(contextPtr: Long, numThreads: Int, audioData: FloatArray, progressCallback: ProgressCallback, segmentCallback: ProgressCallback)
         external fun getTextSegmentCount(contextPtr: Long): Int
         external fun getTextSegment(contextPtr: Long, index: Int): String
         external fun getTextSegmentT0(contextPtr: Long, index: Int): Long

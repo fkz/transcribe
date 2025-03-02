@@ -58,14 +58,14 @@ class Recorder {
                     break
                 }
                 if (r > 0) {
-                    transcriber.pushData(audioBuffer, r)
+                    //transcriber.pushData(audioBuffer, r)
                 }
                 if (r == 0) {
-                    if (!isRecording.value)
-                        transcriber.recordingStopped()
+                    //if (!isRecording.value)
+                       // transcriber.recordingStopped()
                     // TODO possible race condition that recording stops between
                     // previous and next line
-                    val _t = isRecording.dropWhile { !it }.first()
+                    //val _t = isRecording.dropWhile { !it }.first()
                 }
             }
         }

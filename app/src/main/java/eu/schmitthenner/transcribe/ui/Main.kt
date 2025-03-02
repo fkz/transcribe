@@ -15,21 +15,29 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import eu.schmitthenner.transcribe.Downloader
 import eu.schmitthenner.transcribe.Model
 import eu.schmitthenner.transcribe.ModelState
 import eu.schmitthenner.transcribe.SelectedModel
@@ -39,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteOrder
+import java.nio.ShortBuffer
 
 
 class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Transcriber) {
@@ -68,6 +77,7 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
         if (uri != null) {
             model.setPlayFromFile(true)
             context.lifecycleScope.launch(Dispatchers.IO) {
+                val data = mutableListOf<ShortArray>()
                 val extractor = MediaExtractor()
                 run {
                     extractor.setDataSource(context, uri, null)
@@ -140,7 +150,7 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
                                     rawPcmData
                                 }
 
-                                transcriber.pushData(resampledData, resampledData.size)
+                                data.add(resampledData)
                             }
 
                             codec.releaseOutputBuffer(outputBufferId, false)
@@ -153,11 +163,11 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
                             outputBufferId = codec.dequeueOutputBuffer(bufferInfo, 1000)
                         }
                     }
-                    transcriber.recordingStopped()
                     codec.stop()
                     codec.release()
                     extractor.release()
                 }
+                transcriber.sendData(data)
             }
             model.setPlayFromFile(false)
         }
@@ -181,12 +191,34 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePicker) {
+fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePicker, transcriber: Transcriber, showLogs: () -> Unit) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(Modifier.verticalScroll(rememberScrollState())) {
+            val expanded = remember { mutableStateOf(false)}
+            val currentModel = uiState.value.selectedModel
+            ExposedDropdownMenuBox(expanded = expanded.value, onExpandedChange = {expanded.value = it }) {
+                TextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    readOnly = true,
+                    value = currentModel?.name.orEmpty(),
+                    label = { Text("Selected model") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
+                    onValueChange = {}
+                )
+                ExposedDropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = false }) {
+                    for (i in uiState.value.modelState.filterValues { it == ModelState.Downloaded || it == ModelState.Instantiated }) {
+                        DropdownMenuItem(text = { Text(i.key.name) }, onClick = {
+                            model.updateSelectedModel(i.key)
+                            expanded.value = false
+                        })
+                    }
+                }
+            }
+
             Text(
-                text = uiState.value.modelState.name,
+                text = uiState.value.modelState[uiState.value.selectedModel]?.name.orEmpty(),
                 modifier = Modifier.padding(innerPadding)
             )
             Row {
@@ -207,17 +239,15 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
                 }
             }
 
-            //Text(transcription.value)
-            //Text(transcriptionCount.value.toString())
-            //Text(progress.value.toString())
+            val transcribedTextState = transcriber.transcribedText.collectAsState()
+            val transcribedTextProgress = transcriber.progress.collectAsState()
 
-            val expanded = remember { mutableStateOf(false) }
-            Text("Selected model: " + uiState.value.selectedModel?.name.orEmpty())
-            Button(onClick = { expanded.value = true }) {
-                Text("Switch model")
-            }
-            val selectedModel = uiState.value.selectedModel
-            if (uiState.value.modelState == ModelState.DoesNotExist && selectedModel != null) {
+            Text(transcribedTextState.value)
+            //Text(transcriptionCount.value.toString())
+            Text(transcribedTextProgress.value)
+
+
+            //if (uiState.value.modelState == ModelState.DoesNotExist && selectedModel != null) {
                 /*Button(onClick = {
                     val downloadManager = getSystemService(DownloadManager::class.java)
                     val request = DownloadManager.Request(selectedModel.downloadLocation())
@@ -228,16 +258,7 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
                 Button(onClick = {
                     filePicker2.launch(arrayOf("* / *"))
                 }) { Text("Upload model manually") } */
-            }
-
-            DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = false }) {
-                for (i in SelectedModel.entries) {
-                    DropdownMenuItem(text = { Text(i.name) }, onClick = {
-                        model.updateSelectedModel(i)
-                        expanded.value = false
-                    })
-                }
-            }
+            //}
             //val transcriptionValue = transcription.value
             //Button(onClick = {
             //    val clipboardManager = getSystemService(ClipboardManager::class.java)
@@ -248,7 +269,7 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
             //    Text("Copy transcript")
             //}
             Button(onClick = {
-            //    filePickerLogs.launch("logs.txt")
+                showLogs()
             }) {
                 Text("See logs")
             }

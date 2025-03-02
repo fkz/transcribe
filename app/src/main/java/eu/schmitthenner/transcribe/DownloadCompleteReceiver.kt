@@ -8,10 +8,11 @@ import android.util.Log
 import androidx.core.net.toUri
 import java.io.File
 
+
 class DownloadCompleteReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.i("DownloadCompleteReceiver", "received download compeleted event")
-        val v = Downloader.downloader.value
+        /*val v = Downloader.downloader.value
         if (v != null) {
             val uri = context.getSystemService(DownloadManager::class.java).getUriForDownloadedFile(v.first)
             if (uri != null) {
@@ -33,8 +34,8 @@ class DownloadCompleteReceiver: BroadcastReceiver() {
                     }
                     stream.close()
                 }
-                v.third.downloadFinished()
+                v.third.downloadFinished(v.second)
             }
-        }
+        }*/
     }
 }
