@@ -47,25 +47,27 @@ class Recorder {
         }
 
         withContext(Dispatchers.IO) {
-            val audioBuffer = ShortArray(bufferSize);
-            val floatArray = FloatArray(bufferSize);
-            var offset = 0
-
             while (true) {
-                val r = audioRecord.read(audioBuffer, offset, bufferSize - offset, AudioRecord.READ_NON_BLOCKING)
-                if (r < 0) {
-                    Log.e("MainActivity", "error while recording; stop");
-                    break
-                }
-                if (r > 0) {
-                    //transcriber.pushData(audioBuffer, r)
-                }
-                if (r == 0) {
-                    //if (!isRecording.value)
-                       // transcriber.recordingStopped()
-                    // TODO possible race condition that recording stops between
-                    // previous and next line
-                    //val _t = isRecording.dropWhile { !it }.first()
+                isRecording.dropWhile { !it }.first()
+                val buffers = mutableListOf<ShortArray>()
+                var buffer = ShortArray(bufferSize)
+                var offset = 0
+                while (true) {
+                    val r = audioRecord.read(buffer, offset, AudioRecord.READ_NON_BLOCKING)
+                    if (r < 0) {
+                        Log.e("MainActivity", "error while recording; stop")
+                        break
+                    } else if (r > 0) {
+                        offset += r
+                        if (offset == bufferSize) {
+                            buffers.add(buffer)
+                            buffer = ShortArray(bufferSize)
+                        }
+                    } else if (r == 0 && !isRecording.value) {
+                        val lastBuffer = buffer.slice(0 until offset).toShortArray()
+                        buffers.add(lastBuffer)
+                        transcriber.sendData(buffers)
+                    }
                 }
             }
         }
