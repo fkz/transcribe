@@ -67,6 +67,7 @@ class Recorder {
                         val lastBuffer = buffer.slice(0 until offset).toShortArray()
                         buffers.add(lastBuffer)
                         transcriber.sendData(buffers, prompt.value)
+                        break
                     }
                 }
             }

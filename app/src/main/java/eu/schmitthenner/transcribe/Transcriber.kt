@@ -106,7 +106,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                         var index = 0
                         progress.update { "Prepare to transcribe" }
                         for (array in action.data) {
-                            for (i in 0 until array.size) {
+                            for (i in array.indices) {
                                 floatArray[index + i] = array[i] / 32768f
                             }
                             index += array.size
