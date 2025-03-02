@@ -69,6 +69,7 @@ data class UiState(
     val selectedModel: SelectedModel? = null,
     val modelState: Map<SelectedModel, ModelState> = mapOf(),
     val hasRecordPermission: Boolean = false,
+    val prompt: String? = null
 ) {
     fun allowRecording(): Boolean = selectedModel != null && modelState[selectedModel] == ModelState.Instantiated && !isPlaying
 }
@@ -137,6 +138,12 @@ class Model: ViewModel() {
                 val f = File(context.filesDir, key.fileName())
                 if (f.exists()) ModelState.Downloaded else ModelState.DoesNotExist
             })
+        }
+    }
+
+    fun changePrompt(prompt: String) {
+        _uiState.update {
+            it.copy(prompt = prompt)
         }
     }
 }

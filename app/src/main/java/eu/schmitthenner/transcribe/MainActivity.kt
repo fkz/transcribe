@@ -121,7 +121,8 @@ class MainActivity : ComponentActivity() {
         val self = this
         lifecycleScope.launch {
             val isRecording = model.uiState.map { it.isRecording }.dropWhile { !it }.stateIn(this)
-            recorder.run(self, self.lifecycleScope, transcriber, isRecording)
+            val prompt = model.uiState.map { it.prompt }.stateIn(this)
+            recorder.run(self, self.lifecycleScope, transcriber, isRecording, prompt)
         }
 
         @OptIn(ExperimentalMaterial3Api::class)

@@ -195,11 +195,12 @@ void callback_wrapper(struct whisper_context * ctx, struct whisper_state * state
 JNIEXPORT void JNICALL
 Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_fullTranscribe(
         JNIEnv *env, jobject thiz, jlong context_ptr, jint num_threads,
-        jfloatArray audio_data, jobject progress_callback, jobject segment_callback) {
+        jfloatArray audio_data, jobject progress_callback, jobject segment_callback, jstring prompt) {
 UNUSED(thiz);
 struct whisper_context *context = (struct whisper_context *) context_ptr;
 jfloat *audio_data_arr = (*env)->GetFloatArrayElements(env, audio_data, NULL);
 const jsize audio_data_length = (*env)->GetArrayLength(env, audio_data);
+
 
 // The below adapted from the Objective-C iOS sample
 struct whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
@@ -211,6 +212,10 @@ params.translate = false;
 params.language = "de";
 params.n_threads = num_threads;
 params.single_segment = false;
+
+if (prompt != NULL) {
+    params.initial_prompt = (*env)->GetStringUTFChars(env, prompt, NULL);
+}
 
 struct progress_segment_user_data progress_user_data;
 struct progress_segment_user_data segment_user_data;
@@ -239,6 +244,9 @@ LOGI("Failed to run the model");
 whisper_print_timings(context);
 }
 (*env)->ReleaseFloatArrayElements(env, audio_data, audio_data_arr, JNI_ABORT);
+if (prompt != NULL) {
+    (*env)->ReleaseStringUTFChars(env, prompt, params.initial_prompt);
+}
 }
 
 JNIEXPORT jint JNICALL

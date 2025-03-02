@@ -167,7 +167,7 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
                     codec.release()
                     extractor.release()
                 }
-                transcriber.sendData(data)
+                transcriber.sendData(data, model.uiState.value.prompt)
             }
             model.setPlayFromFile(false)
         }

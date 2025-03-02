@@ -3,29 +3,26 @@ package eu.schmitthenner.transcribe
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.min
 
 sealed class TranscribeAction() {
     companion object {
         data class SelectedModelChanged(val selectedModel: SelectedModel?): TranscribeAction()
-        class DataReceived(val data: List<ShortArray>): TranscribeAction()
+        class DataReceived(val data: List<ShortArray>, val prompt: String?): TranscribeAction()
     }
 }
 
 data class TranscribeResult(val from: Long, val to: Long, val text: String)
 
 interface Whisper {
-    fun transcribe(floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit)
+    fun transcribe(prompt: String?, floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit)
     fun modelChanged(selectedModel: SelectedModel?): Boolean
     fun ready(): Boolean
     fun finalTranscription(): List<TranscribeResult>
@@ -41,9 +38,9 @@ class WhisperCpp(val context: Context): Whisper {
 
     override fun ready(): Boolean = ptr != 0L
 
-    override fun transcribe(floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit) {
+    override fun transcribe(prompt: String?, floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit) {
         var already = 0
-        WhisperLib.fullTranscribe(ptr, 8, floatArray, progress) {
+        WhisperLib.fullTranscribe(ptr, 8, floatArray, progress, prompt = prompt, segmentCallback = {
             val after = already + it
             for (i in already until after) {
                 val t = WhisperLib.getTextSegment(ptr, i)
@@ -52,7 +49,7 @@ class WhisperCpp(val context: Context): Whisper {
                 res(TranscribeResult(t0, t1, t))
             }
             already = after
-        }
+        })
     }
 
     override fun finalTranscription(): List<TranscribeResult> {
@@ -115,7 +112,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                             index += array.size
                         }
                         if (whisper.ready()) {
-                            whisper.transcribe(floatArray, { prog -> progress.update { "Transcribing: $prog% finished" }}) {
+                            whisper.transcribe(action.prompt, floatArray, { prog -> progress.update { "Transcribing: $prog% finished" }}) {
                                 t -> transcribedText.update {
                                     it + "\n[${t.from/50}-${t.to/50}] ${t.text}"
                             }
@@ -148,7 +145,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
         }
     }
 
-    suspend fun sendData(data: MutableList<ShortArray>) {
-        transcribeAction.send(TranscribeAction.Companion.DataReceived(data))
+    suspend fun sendData(data: MutableList<ShortArray>, prompt: String?) {
+        transcribeAction.send(TranscribeAction.Companion.DataReceived(data, prompt = prompt,))
     }
 }

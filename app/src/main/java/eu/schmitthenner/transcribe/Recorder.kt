@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class Recorder {
-    suspend fun run(context: Activity, scope: CoroutineScope, transcriber: Transcriber, isRecording: StateFlow<Boolean>) {
+    suspend fun run(context: Activity, scope: CoroutineScope, transcriber: Transcriber, isRecording: StateFlow<Boolean>, prompt: StateFlow<String?>) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.RECORD_AUDIO
@@ -66,7 +66,7 @@ class Recorder {
                     } else if (r == 0 && !isRecording.value) {
                         val lastBuffer = buffer.slice(0 until offset).toShortArray()
                         buffers.add(lastBuffer)
-                        transcriber.sendData(buffers)
+                        transcriber.sendData(buffers, prompt.value)
                     }
                 }
             }

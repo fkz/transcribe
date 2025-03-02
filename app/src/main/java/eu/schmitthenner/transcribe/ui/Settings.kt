@@ -24,6 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -163,6 +165,7 @@ class Downloader(val context: ComponentActivity, val model: Model) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
     Column(modifier = Modifier.padding(16.dp)) {
@@ -227,6 +230,17 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                 }
             }
         }
-    }
 
+        val uiStateValue by uiState
+
+        ListItem(
+            headlineContent = { Text("Prompt") },
+            supportingContent = {
+                TextField(
+                    value = uiStateValue.prompt ?: "",
+                    onValueChange = { model.changePrompt(it) }
+                )
+            }
+        )
+    }
 }
