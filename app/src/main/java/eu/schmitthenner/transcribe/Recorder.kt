@@ -53,7 +53,7 @@ class Recorder {
                 var buffer = ShortArray(bufferSize)
                 var offset = 0
                 while (true) {
-                    val r = audioRecord.read(buffer, offset, AudioRecord.READ_NON_BLOCKING)
+                    val r = audioRecord.read(buffer, offset, bufferSize - offset, AudioRecord.READ_NON_BLOCKING)
                     if (r < 0) {
                         Log.e("MainActivity", "error while recording; stop")
                         break
