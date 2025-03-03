@@ -168,11 +168,10 @@ class Downloader(val context: ComponentActivity, val model: Model) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "Models", style = MaterialTheme.typography.headlineSmall)
+    val downloading by downloader.ongoing.collectAsState()
+    LazyColumn(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+        item { Text(text = "Models", style = MaterialTheme.typography.headlineSmall) }
 
-        val downloading by downloader.ongoing.collectAsState()
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(uiState.value.modelState.toList()) { (m, s) ->
                 Row(
                     modifier = Modifier
@@ -202,8 +201,9 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                         supportingContent = {
                             when (s) {
                                 ModelState.DownloadTriggered -> {
-                                    Text("Downloading - ${downloading[m]?.details }")
+                                    Text("Downloading - ${downloading[m]?.details}")
                                 }
+
                                 ModelState.Downloaded -> Text("Available")
                                 ModelState.DoesNotExist -> Text("Not available")
                                 ModelState.Instantiated -> Text("Available - Instantiated")
@@ -218,10 +218,21 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.width(32.dp)
                                     )
-                                ModelState.DoesNotExist -> IconButton(onClick = { downloader.triggerDownload(m) }) { Icon(Icons.Default.Add, "Download model") }
+
+                                ModelState.DoesNotExist -> IconButton(onClick = {
+                                    downloader.triggerDownload(
+                                        m
+                                    )
+                                }) { Icon(Icons.Default.Add, "Download model") }
+
                                 ModelState.Downloaded -> {}
                                 ModelState.Instantiated -> {}
-                                ModelState.Instantiating -> CircularProgressIndicator(modifier = Modifier.width(32.dp))
+                                ModelState.Instantiating -> CircularProgressIndicator(
+                                    modifier = Modifier.width(
+                                        32.dp
+                                    )
+                                )
+
                                 ModelState.DownloadFailed -> {}
                                 ModelState.InstantiationFailed -> {}
                             }
@@ -229,28 +240,39 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                     )
                 }
             }
+
+        item {
+            val uiStateValue by uiState
+
+            ListItem(
+                headlineContent = { Text("Load model at startup") },
+                trailingContent = {
+                    Switch(
+                        checked = uiStateValue.loadAtStartup,
+                        onCheckedChange = { model.updateLoadAtStartup(it) }
+                    )
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Prompt") },
+                supportingContent = {
+                    TextField(
+                        value = uiStateValue.prompt ?: "",
+                        onValueChange = { model.changePrompt(it) }
+                    )
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Threads") },
+                supportingContent = {
+                    TextField(
+                        value = uiStateValue.threads.toString(),
+                        onValueChange = { it.toIntOrNull()?.let { model.updateThreads(it) } }
+                    )
+                }
+            )
         }
-
-        val uiStateValue by uiState
-
-        ListItem(
-            headlineContent = { Text("Prompt") },
-            supportingContent = {
-                TextField(
-                    value = uiStateValue.prompt ?: "",
-                    onValueChange = { model.changePrompt(it) }
-                )
-            }
-        )
-
-        ListItem(
-            headlineContent = { Text("Threads") },
-            supportingContent = {
-                TextField(
-                    value = uiStateValue.threads.toString(),
-                    onValueChange = { it.toIntOrNull()?.let { model.updateThreads(it) } }
-                )
-            }
-        )
     }
 }

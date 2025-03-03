@@ -1,14 +1,14 @@
 package eu.schmitthenner.transcribe
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
-import android.os.Parcelable
-import androidx.lifecycle.SavedStateHandle
+import android.os.Bundle
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.selects.select
 import java.io.File
 import java.time.Instant
 
@@ -77,15 +77,17 @@ data class UiState(
     val hasRecordPermission: Boolean = false,
     val prompt: String? = null,
     val transcriptions: List<Transcription> = listOf(),
-    val threads: Int = 4
+    val threads: Int = 4,
+    val loadAtStartup: Boolean = true,
 ) {
     fun allowRecording(): Boolean = selectedModel != null && modelState[selectedModel] == ModelState.Instantiated && !isPlaying
 }
 
 
-class Model(private val state: SavedStateHandle): ViewModel() {
+class Model(): ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
+    lateinit var sharedPreferences: SharedPreferences
 
     fun updateModelState(selectedModel: SelectedModel?, modelState: ModelState) {
         _uiState.update {
@@ -95,7 +97,6 @@ class Model(private val state: SavedStateHandle): ViewModel() {
                 it
             }
         }
-        state["selectedModel"] = selectedModel
     }
 
     fun toggleRecording(record: Boolean) {
@@ -114,6 +115,9 @@ class Model(private val state: SavedStateHandle): ViewModel() {
                     else
                         it.modelState
             )
+        }
+        sharedPreferences.edit(commit = true) {
+            putString("selectedMode", selectedModel?.name)
         }
     }
 
@@ -142,13 +146,15 @@ class Model(private val state: SavedStateHandle): ViewModel() {
     }
 
     fun initialize(context: Context) {
+        sharedPreferences = context.getSharedPreferences("model", Context.MODE_PRIVATE)
         _uiState.update {
             val modelState = SelectedModel.entries.associateWith { key ->
                 val f = File(context.filesDir, key.fileName())
                 if (f.exists()) ModelState.Downloaded else ModelState.DoesNotExist
             }
-            val maybeSelectedModel = state.get<SelectedModel>("selectedModel")
-            val selectedModel = if (modelState[maybeSelectedModel] == ModelState.Downloaded) {
+            val loadAtStartup = sharedPreferences.getBoolean("loadAtStartup", true)
+            val maybeSelectedModel = sharedPreferences.getString("selectedMode", null)?.let { SelectedModel.valueOf(it) }
+            val selectedModel = if (loadAtStartup && modelState[maybeSelectedModel] == ModelState.Downloaded) {
                 maybeSelectedModel
             } else {
                 null
@@ -156,8 +162,9 @@ class Model(private val state: SavedStateHandle): ViewModel() {
             it.copy(
                 modelState = modelState,
                 selectedModel = selectedModel,
-                prompt = state.get<String>("prompt"),
-                threads = state.get<Int>("threads") ?: 4,
+                prompt = sharedPreferences.getString("prompt", ""),
+                threads = sharedPreferences.getInt("threads", 4),
+                loadAtStartup = loadAtStartup
             )
         }
     }
@@ -166,7 +173,9 @@ class Model(private val state: SavedStateHandle): ViewModel() {
         _uiState.update {
             it.copy(prompt = prompt)
         }
-        state["prompt"] = prompt
+        sharedPreferences.edit(commit = true) {
+            putString("prompt", prompt)
+        }
     }
 
     fun addTranscription(transcription: Transcription) {
@@ -175,6 +184,21 @@ class Model(private val state: SavedStateHandle): ViewModel() {
 
     fun updateThreads(threads: Int) {
         _uiState.update { it.copy(threads = threads) }
-        state["threads"] = threads
+        sharedPreferences.edit(commit = true) {
+            putInt("threads", threads)
+        }
+    }
+
+    fun save(outState: Bundle) {
+        outState.putString("selectedMode", uiState.value.selectedModel?.name)
+        outState.putString("prompt", uiState.value.prompt)
+        outState.putInt("threads", uiState.value.threads)
+    }
+
+    fun updateLoadAtStartup(checked: Boolean) {
+        _uiState.update { it.copy(loadAtStartup = checked) }
+        sharedPreferences.edit(commit = true) {
+            putBoolean("loadAtStartup", checked)
+        }
     }
 }

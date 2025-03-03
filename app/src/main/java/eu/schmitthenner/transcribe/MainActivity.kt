@@ -12,6 +12,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         Log.i("MainActivity", "MainActivity started")
-        val model = ViewModelProvider(this).get(Model::class)
+        val model = ViewModelProvider(this)[Model::class]
         model.initialize(this)
 
         val transcriber = Transcriber(this, WhisperCpp(this, { model.uiState.value.threads }))
