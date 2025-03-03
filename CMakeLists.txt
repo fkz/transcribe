@@ -18,6 +18,11 @@ add_library(
         app/jni.c
 )
 
+if (${ANDROID_ABI} STREQUAL "arm64-v8a")
+    # We assume architecture supports fp16
+    set(GGML_CPU_ARM_ARCH armv8.2-a+fp16)
+endif()
+
 if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     target_compile_options(${target_name} PRIVATE -O3)
     target_compile_options(${target_name} PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
