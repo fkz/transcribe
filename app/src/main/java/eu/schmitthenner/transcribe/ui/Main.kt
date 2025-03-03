@@ -263,7 +263,7 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
 
             items(uiState.value.transcriptions, key = { it.before }) {
                 ListItem(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 50.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     headlineContent = {
                         Text(
                             DateFormat.format("", Date.from(it.before)).toString()
