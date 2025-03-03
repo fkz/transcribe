@@ -242,5 +242,15 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                 )
             }
         )
+
+        ListItem(
+            headlineContent = { Text("Threads") },
+            supportingContent = {
+                TextField(
+                    value = uiStateValue.threads.toString(),
+                    onValueChange = { it.toIntOrNull()?.let { model.updateThreads(it) } }
+                )
+            }
+        )
     }
 }

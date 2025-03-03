@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this).get(Model::class)
         model.initialize(this)
 
-        val transcriber = Transcriber(this, WhisperCpp(this))
+        val transcriber = Transcriber(this, WhisperCpp(this, { model.uiState.value.threads }))
         val recorder = Recorder()
 
         val recordFilePicker = RecordFilePicker(this@MainActivity, model, transcriber)
@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            transcriber.run(this, model.uiState)
+            transcriber.run(this, model.uiState, model)
         }
 
         val self = this

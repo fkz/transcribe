@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.selects.select
 import java.io.File
+import java.time.Instant
 
 enum class SelectedModel {
     LargeV3 {
@@ -63,13 +64,18 @@ enum class ModelState {
     Instantiated
 }
 
+data class Segment(val from: Long, val to: Long, val text: String)
+data class Transcription(val segments: Array<Segment>, val before: Instant, val after: Instant)
+
 data class UiState(
     val isRecording: Boolean = false,
     val isPlaying: Boolean = false,
     val selectedModel: SelectedModel? = null,
     val modelState: Map<SelectedModel, ModelState> = mapOf(),
     val hasRecordPermission: Boolean = false,
-    val prompt: String? = null
+    val prompt: String? = null,
+    val transcriptions: List<Transcription> = listOf(),
+    val threads: Int = 4
 ) {
     fun allowRecording(): Boolean = selectedModel != null && modelState[selectedModel] == ModelState.Instantiated && !isPlaying
 }
@@ -145,5 +151,13 @@ class Model: ViewModel() {
         _uiState.update {
             it.copy(prompt = prompt)
         }
+    }
+
+    fun addTranscription(transcription: Transcription) {
+        _uiState.update { it.copy(transcriptions = it.transcriptions + transcription )}
+    }
+
+    fun updateThreads(threads: Int) {
+        _uiState.update { it.copy(threads = threads) }
     }
 }

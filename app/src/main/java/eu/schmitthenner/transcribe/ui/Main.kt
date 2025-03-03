@@ -10,6 +10,7 @@ import android.media.MediaCodecList
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +29,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -48,6 +52,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
+import java.util.Date
 
 
 class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Transcriber) {
@@ -243,11 +248,19 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
             val transcribedTextProgress = transcriber.progress.collectAsState()
 
             Text(transcribedTextState.value)
-            //Text(transcriptionCount.value.toString())
-            val l = transcribedTextProgress.value
-            val u = if (l == "" && uiState.value.isPlaying) "Converting audio..." else l
-            Text(u)
+            val progress = if (uiState.value.isPlaying) "Converting audio..." else transcribedTextProgress.value
+            Text(progress)
 
+            LazyColumn() {
+                items(uiState.value.transcriptions, key = { it.before }) {
+                    ListItem(
+                        headlineContent = { Text(DateFormat.format("", Date.from(it.before)).toString()) },
+                        supportingContent = {
+                            Text(it.segments.joinToString(separator = "\n") { it.text })
+                        }
+                    )
+                }
+            }
 
             //if (uiState.value.modelState == ModelState.DoesNotExist && selectedModel != null) {
                 /*Button(onClick = {

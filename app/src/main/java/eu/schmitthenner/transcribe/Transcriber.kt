@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.time.Instant
+import java.util.Date
 
 sealed class TranscribeAction() {
     companion object {
@@ -28,7 +30,7 @@ interface Whisper {
     fun finalTranscription(): List<TranscribeResult>
 }
 
-class WhisperCpp(val context: Context): Whisper {
+class WhisperCpp(val context: Context, val numThreads: () -> Int): Whisper {
     init  {
         WhisperLib.initLogging()
     }
@@ -40,7 +42,7 @@ class WhisperCpp(val context: Context): Whisper {
 
     override fun transcribe(prompt: String?, floatArray: FloatArray, progress: (Int) -> Unit, res: (TranscribeResult) -> Unit) {
         var already = 0
-        WhisperLib.fullTranscribe(ptr, 8, floatArray, progress, prompt = prompt, segmentCallback = {
+        WhisperLib.fullTranscribe(ptr, numThreads(), floatArray, progress, prompt = prompt, segmentCallback = {
             val after = already + it
             for (i in already until after) {
                 val t = WhisperLib.getTextSegment(ptr, i)
@@ -87,7 +89,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
     val counter: MutableStateFlow<Int> = MutableStateFlow(0)
     val progress: MutableStateFlow<String> = MutableStateFlow("")
 
-    suspend fun transcribe(coroutineScope: CoroutineScope) {
+    suspend fun transcribe(model: Model) {
         withContext(Dispatchers.IO) {
             while (true) {
                 when (val action = transcribeAction.receive()) {
@@ -101,6 +103,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                         modelState.send(action.selectedModel to state)
                     }
                     is TranscribeAction.Companion.DataReceived -> {
+                        val before = Instant.now()
                         val fullSize = action.data.sumOf { it.size }
                         val floatArray = FloatArray(fullSize)
                         var index = 0
@@ -118,11 +121,24 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                             }
                             }
                         }
+
+                        val segments = whisper.finalTranscription().let { s -> Array(s.size) {
+                                Segment(s[it].from, s[it].to, s[it].text)
+                            }
+                        }
+
+
+
                         transcribedText.update {
                             whisper.finalTranscription().joinToString("\n") {
                                 "[${it.from/50}-${it.to/50}] ${it.text}"
                             }
                         }
+
+                        val after = Instant.now()
+                        model.addTranscription(Transcription(segments, before, after))
+                        transcribedText.update { "" }
+
                         progress.update { "Finished transcribing" }
                     }
                 }
@@ -130,9 +146,9 @@ class Transcriber(val context: Context, val whisper: Whisper) {
         }
     }
 
-    suspend fun run(coroutineScope: CoroutineScope, state: StateFlow<UiState>) {
+    suspend fun run(coroutineScope: CoroutineScope, state: StateFlow<UiState>, model: Model) {
         coroutineScope.launch {
-            transcribe(coroutineScope)
+            transcribe(model)
         }
 
         state.mapNotNull { if (it.modelState[it.selectedModel] != ModelState.Downloaded) null else it.selectedModel }.collect { selectedModel ->
