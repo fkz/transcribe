@@ -4,11 +4,13 @@ project(whisper.cpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#iset(GGML_VULKAN ON)
+#set(GGML_VULKAN ON)
 
 add_subdirectory(whisper.cpp)
 
 find_library(LOG_LIB log)
+
+set(target_name whisper-jni)
 
 add_library(
         whisper-jni
