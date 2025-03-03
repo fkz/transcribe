@@ -60,16 +60,16 @@ class WhisperLib {
                 Log.d(LOG_TAG, "CPU does not support either");
             }
 
-            if (loadVfpv4) {
+            /*if (loadVfpv4) {
                 Log.d(LOG_TAG, "Loading libwhisper_vfpv4.so")
-                System.loadLibrary("whisper_vfpv4")
+                System.loadLibrary("whisper-jni_vfpv4")
             } else if (loadV8fp16) {
                 Log.d(LOG_TAG, "Loading libwhisper_v8fp16_va.so")
-                System.loadLibrary("whisper_v8fp16_va")
-            } else {
+                System.loadLibrary("whisper-jni_v8fp16_va")
+            } else {*/
                 Log.d(LOG_TAG, "Loading libwhisper.so")
-                System.loadLibrary("whisper")
-            }
+                System.loadLibrary("whisper-jni")
+            //}
         }
 
         // JNI methods
