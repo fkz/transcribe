@@ -62,6 +62,7 @@ class Recorder {
                         if (offset == bufferSize) {
                             buffers.add(buffer)
                             buffer = ShortArray(bufferSize)
+                            offset = 0
                         }
                     } else if (r == 0 && !isRecording.value) {
                         val lastBuffer = buffer.slice(0 until offset).toShortArray()
