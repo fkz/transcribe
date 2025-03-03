@@ -74,6 +74,8 @@ import java.nio.ByteOrder
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         Log.i("MainActivity", "MainActivity started")
         val model = ViewModelProvider(this).get(Model::class)
         model.initialize(this)
@@ -124,9 +126,6 @@ class MainActivity : ComponentActivity() {
             val prompt = model.uiState.map { it.prompt }.stateIn(this)
             recorder.run(self, self.lifecycleScope, transcriber, isRecording, prompt)
         }
-
-        @OptIn(ExperimentalMaterial3Api::class)
-        super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
         setContent {

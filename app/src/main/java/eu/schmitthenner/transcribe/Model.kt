@@ -2,6 +2,8 @@ package eu.schmitthenner.transcribe
 
 import android.content.Context
 import android.net.Uri
+import android.os.Parcelable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -81,7 +83,7 @@ data class UiState(
 }
 
 
-class Model: ViewModel() {
+class Model(private val state: SavedStateHandle): ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
 
@@ -93,6 +95,7 @@ class Model: ViewModel() {
                 it
             }
         }
+        state["selectedModel"] = selectedModel
     }
 
     fun toggleRecording(record: Boolean) {
@@ -140,10 +143,22 @@ class Model: ViewModel() {
 
     fun initialize(context: Context) {
         _uiState.update {
-            it.copy(modelState = SelectedModel.entries.associateWith { key ->
+            val modelState = SelectedModel.entries.associateWith { key ->
                 val f = File(context.filesDir, key.fileName())
                 if (f.exists()) ModelState.Downloaded else ModelState.DoesNotExist
-            })
+            }
+            val maybeSelectedModel = state.get<SelectedModel>("selectedModel")
+            val selectedModel = if (modelState[maybeSelectedModel] == ModelState.Downloaded) {
+                maybeSelectedModel
+            } else {
+                null
+            }
+            it.copy(
+                modelState = modelState,
+                selectedModel = selectedModel,
+                prompt = state.get<String>("prompt"),
+                threads = state.get<Int>("threads") ?: 4,
+            )
         }
     }
 
@@ -151,6 +166,7 @@ class Model: ViewModel() {
         _uiState.update {
             it.copy(prompt = prompt)
         }
+        state["prompt"] = prompt
     }
 
     fun addTranscription(transcription: Transcription) {
@@ -159,5 +175,6 @@ class Model: ViewModel() {
 
     fun updateThreads(threads: Int) {
         _uiState.update { it.copy(threads = threads) }
+        state["threads"] = threads
     }
 }

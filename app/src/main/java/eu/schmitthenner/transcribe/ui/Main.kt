@@ -14,9 +14,12 @@ import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -200,67 +203,78 @@ class RecordFilePicker(context: ComponentActivity, model: Model, transcriber: Tr
 @Composable
 fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePicker, transcriber: Transcriber, showLogs: () -> Unit, context: Context) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            val expanded = remember { mutableStateOf(false)}
-            val currentModel = uiState.value.selectedModel
-            ExposedDropdownMenuBox(expanded = expanded.value, onExpandedChange = {expanded.value = it }) {
-                TextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    readOnly = true,
-                    value = currentModel?.name.orEmpty(),
-                    label = { Text("Selected model") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
-                    onValueChange = {}
-                )
-                ExposedDropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = false }) {
-                    for (i in uiState.value.modelState.filterValues { it == ModelState.Downloaded || it == ModelState.Instantiated }) {
-                        DropdownMenuItem(text = { Text(i.key.name) }, onClick = {
-                            model.updateSelectedModel(i.key)
-                            expanded.value = false
-                        })
-                    }
-                }
-            }
-
-            Text(
-                text = uiState.value.modelState[uiState.value.selectedModel]?.name.orEmpty(),
-                modifier = Modifier.padding(innerPadding)
-            )
-            Row {
-                Button(onClick = {
-                    if (uiState.value.hasRecordPermission) model.toggleRecording(
-                        uiState.value.isRecording
-                    ) else recordFilePicker.requestRecordPermission()
-                }, enabled = uiState.value.allowRecording()) {
-                    Text(if (uiState.value.isRecording) "Stop Recording" else "Record")
-                }
-                Button(
-                    enabled = uiState.value.allowRecording() && !uiState.value.isRecording,
-                    onClick = {
-                        recordFilePicker.launch()
-                    }
-                ) {
-                    Text("Transcribe from file")
-                }
-            }
-
-            val transcribedTextState = transcriber.transcribedText.collectAsState()
-            val transcribedTextProgress = transcriber.progress.collectAsState()
-
-            Text(transcribedTextState.value)
-            val progress = if (uiState.value.isPlaying) "Converting audio..." else transcribedTextProgress.value
-            Text(progress)
-
-            LazyColumn() {
-                items(uiState.value.transcriptions, key = { it.before }) {
-                    ListItem(
-                        headlineContent = { Text(DateFormat.format("", Date.from(it.before)).toString()) },
-                        supportingContent = {
-                            Text(it.segments.joinToString(separator = "\n") { it.text })
-                        }
+        val expanded = remember { mutableStateOf(false)}
+        LazyColumn {
+            item {
+                val currentModel = uiState.value.selectedModel
+                ExposedDropdownMenuBox(
+                    expanded = expanded.value,
+                    onExpandedChange = { expanded.value = it }) {
+                    TextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        readOnly = true,
+                        value = currentModel?.name.orEmpty(),
+                        label = { Text("Selected model") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
+                        onValueChange = {}
                     )
+                    ExposedDropdownMenu(
+                        expanded = expanded.value,
+                        onDismissRequest = { expanded.value = false }) {
+                        for (i in uiState.value.modelState.filterValues { it == ModelState.Downloaded || it == ModelState.Instantiated }) {
+                            DropdownMenuItem(text = { Text(i.key.name) }, onClick = {
+                                model.updateSelectedModel(i.key)
+                                expanded.value = false
+                            })
+                        }
+                    }
                 }
+
+                Text(
+                    text = uiState.value.modelState[uiState.value.selectedModel]?.name.orEmpty(),
+                    modifier = Modifier.padding(innerPadding)
+                )
+                Row {
+                    Button(onClick = {
+                        if (uiState.value.hasRecordPermission) model.toggleRecording(
+                            uiState.value.isRecording
+                        ) else recordFilePicker.requestRecordPermission()
+                    }, enabled = uiState.value.allowRecording()) {
+                        Text(if (uiState.value.isRecording) "Stop Recording" else "Record")
+                    }
+                    Button(
+                        enabled = uiState.value.allowRecording() && !uiState.value.isRecording,
+                        onClick = {
+                            recordFilePicker.launch()
+                        }
+                    ) {
+                        Text("Transcribe from file")
+                    }
+                }
+
+                val transcribedTextState = transcriber.transcribedText.collectAsState()
+                val transcribedTextProgress = transcriber.progress.collectAsState()
+
+                Text(transcribedTextState.value)
+                val progress =
+                    if (uiState.value.isPlaying) "Converting audio..." else transcribedTextProgress.value
+                Text(progress)
             }
+
+            items(uiState.value.transcriptions, key = { it.before }) {
+                ListItem(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 50.dp),
+                    headlineContent = {
+                        Text(
+                            DateFormat.format("", Date.from(it.before)).toString()
+                        )
+                    },
+                    supportingContent = {
+                        Text(it.segments.joinToString(separator = "\n") { it.text })
+                    }
+                )
+            }
+
 
             //if (uiState.value.modelState == ModelState.DoesNotExist && selectedModel != null) {
                 /*Button(onClick = {
@@ -275,18 +289,20 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
                 }) { Text("Upload model manually") } */
             //}
             //val transcriptionValue = transcription.value
-            Button(onClick = {
-                val clipboardManager = context.getSystemService(ClipboardManager::class.java)
-                clipboardManager.setPrimaryClip(
-                    ClipData.newPlainText("Transcript", transcribedTextState.value)
-                )
-            }) {
-                Text("Copy transcript")
-            }
-            Button(onClick = {
-                showLogs()
-            }) {
-                Text("See logs")
+            item {
+                //Button(onClick = {
+                //    val clipboardManager = context.getSystemService(ClipboardManager::class.java)
+                //    clipboardManager.setPrimaryClip(
+                //        ClipData.newPlainText("Transcript", transcribedTextState.value)
+                //    )
+                //}) {
+                //    Text("Copy transcript")
+                //}
+                Button(onClick = {
+                    showLogs()
+                }) {
+                    Text("See logs")
+                }
             }
         }
     }
