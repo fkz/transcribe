@@ -1,6 +1,7 @@
 package eu.schmitthenner.transcribe
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -151,17 +152,23 @@ class Transcriber(val context: Context, val whisper: Whisper) {
 
         var s: SelectedModel? = null
         state.collect {
-            val n = if (it.modelState[it.selectedModel] != ModelState.Downloaded) null else it.selectedModel
-            if (s != n) {
-                s = n
-                if (n != null) {
-                    val file = File(context.filesDir, n.fileName())
+            if (it.selectedModel != null && it.modelState[it.selectedModel] != ModelState.Downloaded) {
+                if (s != it.selectedModel) {
+                    Log.w("Transcriber", "selected model ${it.selectedModel} can't be selected, keep $s instantiated")
+                    modelState.send(s to (it.modelState[s] ?: ModelState.DoesNotExist))
+                }
+                return@collect
+            }
+            if (s != it.selectedModel) {
+                if (it.selectedModel != null) {
+                    val file = File(context.filesDir, it.selectedModel.fileName())
                     if (!file.exists()) {
-                        modelState.send(n to ModelState.DoesNotExist)
+                        modelState.send(it.selectedModel to ModelState.DoesNotExist)
                         return@collect
                     }
                 }
-                transcribeAction.send(TranscribeAction.Companion.SelectedModelChanged(n))
+                s = it.selectedModel
+                transcribeAction.send(TranscribeAction.Companion.SelectedModelChanged(it.selectedModel))
             }
         }
     }
