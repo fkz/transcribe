@@ -13,7 +13,9 @@ import android.net.Uri
 import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +56,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.nio.ByteOrder
+import java.time.Duration
 import java.nio.ShortBuffer
+import java.time.Instant
 import java.util.Date
 
 
@@ -261,16 +265,23 @@ fun Main(uiState: State<UiState>, model: Model, recordFilePicker: RecordFilePick
                 Text(progress)
             }
 
-            items(uiState.value.transcriptions, key = { it.before }) {
+            items(uiState.value.transcriptions, key = { it.before }) { t ->
                 ListItem(
-                    modifier = Modifier.fillMaxWidth(),
-                    headlineContent = {
-                        Text(
-                            DateFormat.format("", Date.from(it.before)).toString()
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        val clipboardManager = context.getSystemService(ClipboardManager::class.java)
+                        clipboardManager.setPrimaryClip(
+                            ClipData.newPlainText("Transcript", t.segments.joinToString(separator = "\n") { it.text })
                         )
                     },
+                    headlineContent = {
+                        val diff = Duration.between(t.before, t.after)
+                        val diffSeconds = diff.seconds
+                        val diffString = String.format("%d:%02d", diffSeconds / 60, diffSeconds % 60)
+                        val beforeDate = DateFormat.format("dd.mm.yy HH:mm", Date.from(t.before)).toString()
+                        Text("$beforeDate - $diffString")
+                    },
                     supportingContent = {
-                        Text(it.segments.joinToString(separator = "\n") { it.text })
+                        Text(t.segments.joinToString(separator = "\n") { it.text })
                     }
                 )
             }

@@ -79,6 +79,7 @@ data class UiState(
     val transcriptions: List<Transcription> = listOf(),
     val threads: Int = 4,
     val loadAtStartup: Boolean = true,
+    val useGpu: Boolean = false,
 ) {
     fun allowRecording(): Boolean = selectedModel != null && modelState[selectedModel] == ModelState.Instantiated && !isPlaying
 }
@@ -164,7 +165,8 @@ class Model(): ViewModel() {
                 selectedModel = selectedModel,
                 prompt = sharedPreferences.getString("prompt", ""),
                 threads = sharedPreferences.getInt("threads", 4),
-                loadAtStartup = loadAtStartup
+                loadAtStartup = loadAtStartup,
+                useGpu = sharedPreferences.getBoolean("useGpu", false),
             )
         }
     }
@@ -189,10 +191,11 @@ class Model(): ViewModel() {
         }
     }
 
-    fun save(outState: Bundle) {
-        outState.putString("selectedMode", uiState.value.selectedModel?.name)
-        outState.putString("prompt", uiState.value.prompt)
-        outState.putInt("threads", uiState.value.threads)
+    fun updateUseGpu(useGpu: Boolean) {
+        _uiState.update { it.copy(useGpu = useGpu, selectedModel = null) }
+        sharedPreferences.edit(commit = true) {
+            putBoolean("useGpu", useGpu)
+        }
     }
 
     fun updateLoadAtStartup(checked: Boolean) {

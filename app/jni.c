@@ -161,11 +161,13 @@ Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_initContextFromAsset(
 
 JNIEXPORT jlong JNICALL
 Java_eu_schmitthenner_transcribe_WhisperLib_00024Companion_initContext(
-        JNIEnv *env, jobject thiz, jstring model_path_str) {
+        JNIEnv *env, jobject thiz, jstring model_path_str, jboolean use_gpu) {
     UNUSED(thiz);
     struct whisper_context *context = NULL;
     const char *model_path_chars = (*env)->GetStringUTFChars(env, model_path_str, NULL);
-    context = whisper_init_from_file_with_params(model_path_chars, whisper_context_default_params());
+    struct whisper_context_params params = whisper_context_default_params();
+    params.use_gpu = use_gpu;
+    context = whisper_init_from_file_with_params(model_path_chars, params);
     (*env)->ReleaseStringUTFChars(env, model_path_str, model_path_chars);
     return (jlong) context;
 }

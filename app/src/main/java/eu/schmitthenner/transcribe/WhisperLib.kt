@@ -75,7 +75,7 @@ class WhisperLib {
         // JNI methods
         external fun initContextFromInputStream(inputStream: InputStream): Long
         external fun initContextFromAsset(assetManager: AssetManager, assetPath: String): Long
-        external fun initContext(modelPath: String): Long
+        external fun initContext(modelPath: String, useGpu: Boolean): Long
         external fun freeContext(contextPtr: Long)
         external fun fullTranscribe(contextPtr: Long, numThreads: Int, audioData: FloatArray, progressCallback: ProgressCallback, segmentCallback: ProgressCallback, prompt: String?)
         external fun getTextSegmentCount(contextPtr: Long): Int

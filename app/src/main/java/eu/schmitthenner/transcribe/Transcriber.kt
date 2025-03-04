@@ -30,7 +30,7 @@ interface Whisper {
     fun finalTranscription(): List<TranscribeResult>
 }
 
-class WhisperCpp(val context: Context, val numThreads: () -> Int): Whisper {
+class WhisperCpp(val context: Context, val numThreads: () -> Int, val useGpu: () -> Boolean): Whisper {
     init  {
         WhisperLib.initLogging()
     }
@@ -73,7 +73,7 @@ class WhisperCpp(val context: Context, val numThreads: () -> Int): Whisper {
 
         if (selectedModel != null && previous != selectedModel) {
             val path = File(context.filesDir, selectedModel.fileName())
-            ptr = WhisperLib.initContext(path.path)
+            ptr = WhisperLib.initContext(path.path, useGpu())
             result = ptr != 0L
         }
         previous = selectedModel
@@ -103,7 +103,6 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                         modelState.send(action.selectedModel to state)
                     }
                     is TranscribeAction.Companion.DataReceived -> {
-                        val before = Instant.now()
                         val fullSize = action.data.sumOf { it.size }
                         val floatArray = FloatArray(fullSize)
                         var index = 0
@@ -114,6 +113,7 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                             }
                             index += array.size
                         }
+                        val before = Instant.now()
                         if (whisper.ready()) {
                             whisper.transcribe(action.prompt, floatArray, { prog -> progress.update { "Transcribing: $prog% finished" }}) {
                                 t -> transcribedText.update {
@@ -126,8 +126,6 @@ class Transcriber(val context: Context, val whisper: Whisper) {
                                 Segment(s[it].from, s[it].to, s[it].text)
                             }
                         }
-
-
 
                         transcribedText.update {
                             whisper.finalTranscription().joinToString("\n") {

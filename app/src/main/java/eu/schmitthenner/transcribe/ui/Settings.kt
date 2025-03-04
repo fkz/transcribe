@@ -273,6 +273,15 @@ fun Settings(uiState: State<UiState>, model: Model, downloader: Downloader) {
                     )
                 }
             )
+            ListItem(
+                headlineContent = { Text("Use GPU (Vulkan)")},
+                trailingContent = {
+                    Switch(
+                        checked = uiStateValue.useGpu,
+                        onCheckedChange = { model.updateUseGpu(it) }
+                    )
+                }
+            )
         }
     }
 }

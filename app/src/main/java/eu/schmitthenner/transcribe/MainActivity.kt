@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
         val model = ViewModelProvider(this)[Model::class]
         model.initialize(this)
 
-        val transcriber = Transcriber(this, WhisperCpp(this, { model.uiState.value.threads }))
+        val transcriber = Transcriber(this, WhisperCpp(this, { model.uiState.value.threads }, { model.uiState.value.useGpu }))
         val recorder = Recorder()
 
         val recordFilePicker = RecordFilePicker(this@MainActivity, model, transcriber)
