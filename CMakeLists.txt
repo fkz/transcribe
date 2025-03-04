@@ -19,6 +19,8 @@ endif()
 
 set(Vulkan_GLSLC_EXECUTABLE ${CMAKE_ANDROID_NDK}/shader-tools/${PLATFORM_SUBDIR}/glslc)
 
+set(CMAKE_MAKE_PROGRAM ${CMAKE_ANDROID_SDK}/cmake/3.22.1/bin/ninja)
+
 add_subdirectory(whisper.cpp)
 
 find_library(LOG_LIB log)
