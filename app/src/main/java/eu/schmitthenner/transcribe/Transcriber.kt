@@ -149,12 +149,19 @@ class Transcriber(val context: Context, val whisper: Whisper) {
             transcribe(model)
         }
 
-        state.mapNotNull { if (it.modelState[it.selectedModel] != ModelState.Downloaded) null else it.selectedModel }.collect { selectedModel ->
-            val file = File(context.filesDir, selectedModel.fileName())
-            if (file.exists()) {
-                transcribeAction.send(TranscribeAction.Companion.SelectedModelChanged(selectedModel))
-            } else {
-                modelState.send(selectedModel to ModelState.DoesNotExist)
+        var s: SelectedModel? = null
+        state.collect {
+            val n = if (it.modelState[it.selectedModel] != ModelState.Downloaded) null else it.selectedModel
+            if (s != n) {
+                s = n
+                if (n != null) {
+                    val file = File(context.filesDir, n.fileName())
+                    if (!file.exists()) {
+                        modelState.send(n to ModelState.DoesNotExist)
+                        return@collect
+                    }
+                }
+                transcribeAction.send(TranscribeAction.Companion.SelectedModelChanged(n))
             }
         }
     }

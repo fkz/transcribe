@@ -192,7 +192,14 @@ class Model(): ViewModel() {
     }
 
     fun updateUseGpu(useGpu: Boolean) {
-        _uiState.update { it.copy(useGpu = useGpu, selectedModel = null) }
+        _uiState.update { it.copy(useGpu = useGpu, selectedModel = null,
+            modelState =
+                if (it.selectedModel != null)
+                    it.modelState + (it.selectedModel to ModelState.Downloaded)
+                else
+                    it.modelState
+            )
+        }
         sharedPreferences.edit(commit = true) {
             putBoolean("useGpu", useGpu)
         }
