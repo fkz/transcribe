@@ -8,10 +8,11 @@ plugins {
 android {
     namespace = "eu.schmitthenner.transcribe"
     compileSdk = 34
+    ndkVersion = "28.0.13004108"
 
     defaultConfig {
         applicationId = "eu.schmitthenner.transcribe"
-        minSdk = 26
+        minSdk = 28
         targetSdk = 34
         val defaultVersionCode = 25
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: defaultVersionCode

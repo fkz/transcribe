@@ -1,3 +1,33 @@
+diff --git a/ggml/src/ggml-vulkan/CMakeLists.txt b/ggml/src/ggml-vulkan/CMakeLists.txt
+index d970f7e..82cbbf1 100644
+--- a/ggml/src/ggml-vulkan/CMakeLists.txt
++++ b/ggml/src/ggml-vulkan/CMakeLists.txt
+@@ -22,6 +22,7 @@ if (Vulkan_FOUND)
+                              ggml-vulkan.cpp
+                              ../../include/ggml-vulkan.h
+                             )
++    target_include_directories(ggml-vulkan SYSTEM PRIVATE ../../../../vulkan/include)
+ 
+     # Compile a test shader to determine whether GL_KHR_cooperative_matrix is supported.
+     # If it's not, there will be an error to stderr.
+diff --git a/ggml/src/ggml-vulkan/vulkan-shaders/CMakeLists.txt b/ggml/src/ggml-vulkan/vulkan-shaders/CMakeLists.txt
+index 0740310..33ec0ac 100644
+--- a/ggml/src/ggml-vulkan/vulkan-shaders/CMakeLists.txt
++++ b/ggml/src/ggml-vulkan/vulkan-shaders/CMakeLists.txt
+@@ -1,8 +1,9 @@
+ find_package (Threads REQUIRED)
+-find_program(GLSLC_EXECUTABLE glslc)
+-if(NOT GLSLC_EXECUTABLE)
+-    message(FATAL_ERROR "glslc not found.")
+-endif()
++#set(GLSLC_EXECUTABLE /Users/d066276/Library/Android/sdk/ndk/26.1.10909125/shader-tools/darwin-x86_64/glslc)
++#find_program(GLSLC_EXECUTABLE glslc)
++#if(NOT GLSLC_EXECUTABLE)
++#    message(FATAL_ERROR "glslc not found.")
++#endif()
+ 
+ set(TARGET vulkan-shaders-gen)
+ add_executable(${TARGET} vulkan-shaders-gen.cpp)
 diff --git a/include/whisper.h b/include/whisper.h
 index 1e13750..a153a9c 100644
 --- a/include/whisper.h

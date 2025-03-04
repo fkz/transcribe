@@ -4,7 +4,20 @@ project(whisper.cpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#set(GGML_VULKAN ON)
+set(GGML_VULKAN ON)
+
+# Determine the platform-specific subdirectory
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    set(PLATFORM_SUBDIR "darwin-x86_64")
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    set(PLATFORM_SUBDIR "linux-x86_64")
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    set(PLATFORM_SUBDIR "windows-x86_64")
+else()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_HOST_SYSTEM_NAME}")
+endif()
+
+set(Vulkan_GLSLC_EXECUTABLE ${CMAKE_ANDROID_NDK}/shader-tools/${PLATFORM_SUBDIR}/glslc)
 
 add_subdirectory(whisper.cpp)
 
