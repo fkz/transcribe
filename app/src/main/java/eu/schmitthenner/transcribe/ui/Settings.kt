@@ -127,16 +127,28 @@ class Downloader(val context: ComponentActivity, val model: Model) {
 
     private fun triggerCopy(id: Long, uri: Uri, s: SelectedModel) {
         context.lifecycleScope.launch(Dispatchers.IO) {
+            val descriptor = context.contentResolver.openFileDescriptor(uri, "r")
+            val size = descriptor?.statSize
+            var totalBytesRead = 0
+            descriptor?.close()
             val stream = context.contentResolver.openInputStream(uri)
-            if (stream != null) {
+            if (stream != null && size != null) {
                 val dest = File(context.filesDir, s.fileName())
                 val stream2 = context.contentResolver.openOutputStream(dest.toUri())
                 if (stream2 != null) {
 
                     val buffer = ByteArray(4096)
                     var bytesRead: Int
+                    var prevPercentage: Long? = null
                     while (stream.read(buffer).also { bytesRead = it } != -1) {
                         stream2.write(buffer, 0, bytesRead)
+                        totalBytesRead += bytesRead
+                        val percentage = totalBytesRead * 100 / size
+                        if (prevPercentage != percentage) {
+                            ongoing.update { it + (s to DownloadDetails(id, "successfully downloaded, copying to app directory - $percentage% done", true)) }
+                            prevPercentage = percentage
+                        }
+
                     }
                     stream2.close()
                     ongoing.update { it - s }
