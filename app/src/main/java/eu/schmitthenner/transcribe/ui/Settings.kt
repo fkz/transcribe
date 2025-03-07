@@ -129,7 +129,7 @@ class Downloader(val context: ComponentActivity, val model: Model) {
         context.lifecycleScope.launch(Dispatchers.IO) {
             val descriptor = context.contentResolver.openFileDescriptor(uri, "r")
             val size = descriptor?.statSize
-            var totalBytesRead = 0
+            var totalBytesRead: Long = 0
             descriptor?.close()
             val stream = context.contentResolver.openInputStream(uri)
             if (stream != null && size != null) {
